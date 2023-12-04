@@ -1,5 +1,36 @@
 import cv2
 import numpy as np
+import requests
+import grequests
+
+async_list = []
+lastRequest = ""
+
+# http://192.168.15.43/on?R=95
+# http://192.168.15.43/on?L=95
+
+# para acionar o servo: colocar um valor entre 0 e 180 tanto para o da esquerda quanto o da direita.
+# valores abaixo de 95 roda em um sentido e acima no oposto.
+
+def ligaR(potencia):
+   resp = ('http://192.168.15.74/on?R='+potencia)
+   return resp
+def ligaL(potencia):
+   resp = ('http://192.168.15.74/on?L='+potencia)
+   return resp
+def pararR():
+   resp = ('http://192.168.15.74/on?R=95')
+   return resp
+def pararL():
+   resp = ('http://192.168.15.74/on?L=95')
+   return resp
+
+def mandarRequest(req):
+    action_item = grequests.get(req)
+    # Add the task to our list of things to do via async
+    async_list.append(action_item)
+    grequests.map(async_list,gtimeout=0.2)
+    async_list.clear()
 
 # Video capture setup
 videoCapture = cv2.VideoCapture(0)
@@ -15,16 +46,28 @@ white = (255,255,255)
 red = (0,0,255)
 
 def turnLeft():
-    print("Turn left")
-    # TODO code to make car turn left
+    global lastRequest
+    if lastRequest != 'left':
+        print("Turn left")      
+        mandarRequest(pararL())
+        mandarRequest(ligaR('110'))
+        lastRequest = 'left'
 
 def onTrack():
-    print("On Track")
-    # TODO code to make car keep going foward
+    global lastRequest
+    if lastRequest != 'foward':
+        print("On Track")
+        mandarRequest(ligaR('110'))
+        mandarRequest(ligaL('110'))
+        lastRequest = 'foward'
 
 def turnRight():
-    print("Turn Right")
-    # TODO code to make car turn right
+    global lastRequest
+    if lastRequest != 'right':
+        print("Turn Right")
+        mandarRequest(pararR())
+        mandarRequest(ligaL('110'))
+        lastRequest = 'right'
 
 def main():
     ret, frame = videoCapture.read()
@@ -45,10 +88,13 @@ def main():
             cy = int(M['m01']/M['m00'])
             if cx >= RightRange:
                 turnRight()
+                
             if cx < RightRange and cx > LeftRange:
                 onTrack()
+                
             if cx <= LeftRange:
                 turnLeft()
+                
             cv2.circle(frame, (cx, cy), 5, white, -1)
             cv2.line(frame, (RightRange, 0), (RightRange, height), red, 2)
             cv2.line(frame, (LeftRange, 0), (LeftRange, height), red, 2)
