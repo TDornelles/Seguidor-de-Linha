@@ -55,11 +55,11 @@ def turnLeft():
 
 def onTrack():
     global lastRequest
-    if lastRequest != 'foward':
+    if lastRequest != 'forward':
         print("On Track")
         mandarRequest(ligaR('110'))
         mandarRequest(ligaL('110'))
-        lastRequest = 'foward'
+        lastRequest = 'forward'
 
 def turnRight():
     global lastRequest
